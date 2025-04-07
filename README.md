@@ -2,7 +2,7 @@
 
 여러 API를 순차적으로 호출하여 데이터를 수집하고 CSV 형식으로 변환하는 도구입니다.
 
-## 기능
+## 주요 기능
 
 - YAML 설정 파일을 통한 API 설정 관리
 - 순차적 API 호출
@@ -52,9 +52,21 @@ node tools/curl-to-yaml.js tools/test-curl.txt config.yaml
 
 ## 사용법
 
+### 기본 실행
 ```bash
 node src/index.js
 ```
+
+### 테스트 실행
+```bash
+npm test
+```
+
+테스트는 다음 항목들을 검증합니다:
+- API 호출 파라미터 정확성
+- 응답 데이터 매핑 정확성
+- 에러 처리
+- 설정 파일 로드
 
 ## 출력 예시
 
@@ -69,6 +81,13 @@ user_id,user_name
 - API 호출은 순차적으로 이루어집니다
 - 각 API 응답은 JSON 형식이어야 합니다
 - mapping 설정의 source는 JSONPath 형식을 따릅니다
+- 에러 발생 시 자세한 에러 메시지가 출력됩니다
+
+## 의존성
+
+- axios: HTTP 요청 처리
+- js-yaml: YAML 설정 파일 처리
+- jest: 테스트 프레임워크 (개발 의존성)
 
 ## 주요 기능
 
