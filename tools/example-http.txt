@@ -1,0 +1,21 @@
+GET https://api.example.com/users?limit=10
+Authorization: Bearer token123
+Content-Type: application/json
+
+POST https://api.example.com/orders
+Content-Type: application/json
+Authorization: Bearer token123
+
+{
+    "userId": "123",
+    "items": ["item1", "item2"]
+}
+
+PUT https://api.example.com/products/123
+Content-Type: application/json
+X-API-Key: abc123
+
+{
+    "name": "Updated Product",
+    "price": 99.99
+} 

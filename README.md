@@ -59,9 +59,10 @@ npm start
 
 실행하면 `output.csv` 파일이 생성됩니다.
 
-## curl 명령어를 YAML 설정으로 변환
+## HTTP 요청을 YAML 설정으로 변환
 
-`tools` 디렉토리에 있는 curl-to-yaml 도구를 사용하여 curl 명령어를 YAML 설정으로 변환할 수 있습니다.
+`tools` 디렉토리에 있는 http-to-yaml 도구를 사용하여 HTTP 요청을 YAML 설정으로 변환할 수 있습니다.
+이 도구는 Postman에서 사용하는 HTTP 텍스트 형식과 호환됩니다.
 
 ### 사용 방법
 
@@ -69,26 +70,32 @@ npm start
 # tools 디렉토리로 이동
 cd tools
 
-# curl 명령어 파일을 YAML 설정으로 변환
-node curl-to-yaml.js example-curl.txt config.yaml
+# HTTP 요청 파일을 YAML 설정으로 변환
+node http-to-yaml.js example-http.txt
 ```
 
 ### 입력 파일 형식
 
-```bash
-curl -X GET "https://api.example.com/users?limit=10" -H "Authorization: Bearer token123"
+```http
+GET https://api.example.com/users?limit=10
+Authorization: Bearer token123
+Content-Type: application/json
 
-curl -X POST "https://api.example.com/orders" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer token123" \
-  -d '{"userId": "123", "items": ["item1", "item2"]}'
+POST https://api.example.com/orders
+Content-Type: application/json
+Authorization: Bearer token123
+
+{
+    "userId": "123",
+    "items": ["item1", "item2"]
+}
 ```
 
 ### 백업 기능
 
-- 변환 시 기존 `config.yaml` 파일이 존재하는 경우, 자동으로 `config.backup.{UUID}.yaml` 형식으로 백업됩니다.
+- 변환 시 기존 `config.yaml` 파일이 존재하는 경우, 자동으로 `config_backup` 디렉토리에 `config.backup.{UUID}.yaml` 형식으로 백업됩니다.
 - UUID는 자동으로 생성되며, 각 백업 파일은 고유한 식별자를 가집니다.
-- 백업 파일은 프로젝트 루트 디렉토리에 저장됩니다.
+- 백업 파일은 프로젝트 루트의 `config_backup` 디렉토리에 저장됩니다.
 
 ## 로그
 
