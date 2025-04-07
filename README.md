@@ -1,6 +1,74 @@
-# Getcha - API to CSV 변환기
+# API 데이터 수집기
 
-여러 API를 순차적으로 호출하여 받은 데이터를 CSV 형식으로 변환하는 도구입니다.
+여러 API를 순차적으로 호출하여 데이터를 수집하고 CSV 형식으로 변환하는 도구입니다.
+
+## 기능
+
+- YAML 설정 파일을 통한 API 설정 관리
+- 순차적 API 호출
+- JSON 응답 데이터에서 원하는 값 추출
+- CSV 형식으로 데이터 변환
+- curl 명령어를 YAML 설정으로 변환하는 도구 포함
+
+## 설치
+
+```bash
+npm install
+```
+
+## 설정
+
+### API 설정 (config.yaml)
+
+```yaml
+apis:
+  - name: "사용자 목록"
+    host: "api.example.com"
+    url: "/users"
+    method: "GET"
+    parameters:
+      limit: 10
+    headers:
+      Authorization: "Bearer token123"
+    mapping:
+      - source: "data[*].id"
+        target: "user_id"
+      - source: "data[*].name"
+        target: "user_name"
+```
+
+### curl 명령어를 YAML로 변환
+
+curl 명령어를 YAML 설정으로 변환하려면 다음 명령어를 사용하세요:
+
+```bash
+node tools/curl-to-yaml.js <입력_파일> [출력_파일]
+```
+
+예시:
+```bash
+node tools/curl-to-yaml.js tools/test-curl.txt config.yaml
+```
+
+## 사용법
+
+```bash
+node src/index.js
+```
+
+## 출력 예시
+
+```csv
+user_id,user_name
+1,홍길동
+2,김철수
+```
+
+## 주의사항
+
+- API 호출은 순차적으로 이루어집니다
+- 각 API 응답은 JSON 형식이어야 합니다
+- mapping 설정의 source는 JSONPath 형식을 따릅니다
 
 ## 주요 기능
 
