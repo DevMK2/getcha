@@ -1,0 +1,5 @@
+curl -X GET "https://api.example.com/users?limit=10" -H "Authorization: Bearer token123"
+
+curl -X POST "https://api.example.com/orders" -H "Content-Type: application/json" -H "Authorization: Bearer token123" -d '{"userId": "123", "items": ["item1", "item2"]}'
+
+curl "https://api.example.com/products" -H "Accept: application/json" -H "X-API-Key: abc123" 

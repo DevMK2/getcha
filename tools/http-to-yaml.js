@@ -61,10 +61,13 @@ function parseHttpRequest(content) {
 // HTTP 파일에서 요청 추출
 function extractHttpRequests(content) {
     const requests = [];
+    // HTTP 메소드로 시작하는 블록을 찾기 위한 정규식
     const requestBlocks = content.split(/\n(?=GET|POST|PUT|DELETE|PATCH)/);
     
     requestBlocks.forEach(block => {
-        if (block.trim().startsWith(/(GET|POST|PUT|DELETE|PATCH)/.source)) {
+        const trimmedBlock = block.trim();
+        // HTTP 메소드로 시작하는지 확인
+        if (/^(GET|POST|PUT|DELETE|PATCH)\s+https?:\/\//.test(trimmedBlock)) {
             requests.push(parseHttpRequest(block));
         }
     });
@@ -97,6 +100,11 @@ function convertHttpToYaml(inputFile) {
         
         // HTTP 요청 파싱
         const apis = extractHttpRequests(content);
+        
+        if (apis.length === 0) {
+            console.error('파싱된 API 요청이 없습니다. 입력 파일을 확인해주세요.');
+            process.exit(1);
+        }
         
         // YAML 형식으로 변환
         const yamlContent = yaml.dump({ apis }, {

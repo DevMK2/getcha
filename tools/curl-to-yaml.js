@@ -19,17 +19,25 @@ function parseCurlCommand(curlCommand) {
     };
 
     // URL 추출
-    const urlMatch = curlCommand.match(/curl\s+['"]?([^'"]+)['"]?/);
+    const urlMatch = curlCommand.match(/curl\s+(?:-X\s+\w+\s+)?["']?(https?:\/\/[^"'\s]+)["']?/);
     if (urlMatch) {
-        const url = urlMatch[1];
-        const urlObj = new URL(url);
-        config.host = urlObj.host;
-        config.url = urlObj.pathname;
-        
-        // 쿼리 파라미터 추출
-        urlObj.searchParams.forEach((value, key) => {
-            config.parameters[key] = value;
-        });
+        try {
+            const url = urlMatch[1];
+            console.log('Extracted URL:', url);  // 디버깅용
+            const urlObj = new URL(url);
+            config.host = urlObj.host;
+            config.url = urlObj.pathname;
+            
+            // 쿼리 파라미터 추출
+            urlObj.searchParams.forEach((value, key) => {
+                config.parameters[key] = value;
+            });
+        } catch (error) {
+            console.error('URL 파싱 실패:', error.message);
+            throw error;
+        }
+    } else {
+        throw new Error('URL을 찾을 수 없습니다');
     }
 
     // 메소드 추출
@@ -39,16 +47,16 @@ function parseCurlCommand(curlCommand) {
     }
 
     // 헤더 추출
-    const headerMatches = curlCommand.match(/-H\s+['"]([^'"]+)['"]/g);
+    const headerMatches = curlCommand.match(/-H\s+["']([^"']+)["']/g);
     if (headerMatches) {
         headerMatches.forEach(header => {
-            const [key, value] = header.replace(/-H\s+['"]/, '').replace(/['"]$/, '').split(': ');
+            const [key, value] = header.replace(/-H\s+["']/, '').replace(/["']$/, '').split(': ');
             config.headers[key] = value;
         });
     }
 
     // 데이터 추출 (POST 요청의 경우)
-    const dataMatch = curlCommand.match(/-d\s+['"]([^'"]+)['"]/);
+    const dataMatch = curlCommand.match(/-d\s+["']([^"']+)["']/);
     if (dataMatch) {
         try {
             const data = JSON.parse(dataMatch[1]);
@@ -65,8 +73,14 @@ function parseCurlCommand(curlCommand) {
 function backupConfig() {
     const rootConfigPath = path.join(__dirname, '..', 'config.yaml');
     if (fs.existsSync(rootConfigPath)) {
+        // 백업 디렉토리 생성
+        const backupDir = path.join(__dirname, '..', 'config_backup');
+        if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir);
+        }
+        
         const backupFileName = `config.backup.${uuidv4()}.yaml`;
-        const backupPath = path.join(__dirname, '..', backupFileName);
+        const backupPath = path.join(backupDir, backupFileName);
         fs.copyFileSync(rootConfigPath, backupPath);
         console.log(`기존 설정 파일 백업 완료: ${backupFileName}`);
     }
@@ -83,6 +97,11 @@ function convertCurlToYaml(inputFile, outputFile) {
         
         // 각 curl 명령어를 파싱하여 설정 객체 생성
         const apis = curlCommands.map(parseCurlCommand);
+        
+        if (apis.length === 0) {
+            console.error('파싱된 API 요청이 없습니다. 입력 파일을 확인해주세요.');
+            process.exit(1);
+        }
         
         // YAML 형식으로 변환
         const yamlContent = yaml.dump({ apis }, {

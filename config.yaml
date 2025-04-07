@@ -3,28 +3,23 @@ apis:
     url: /users
     method: GET
     parameters:
-      limit: 10
+      limit: '10'
     headers:
-      Authorization: "Bearer example-token"
-    mapping:
-      - header: "User ID"
-        path: "id"
-      - header: "Name"
-        path: "name"
-      - header: "Email"
-        path: "email"
-  
+      Authorization: Bearer token123
+    mapping: []
   - host: api.example.com
     url: /orders
-    method: GET
-    parameters:
-      status: "completed"
+    method: POST
+    parameters: {}
     headers:
-      Authorization: "Bearer example-token"
-    mapping:
-      - header: "Order ID"
-        path: "orderId"
-      - header: "Amount"
-        path: "totalAmount"
-      - header: "Status"
-        path: "status" 
+      Content-Type: application/json
+      Authorization: Bearer token123
+    mapping: []
+  - host: api.example.com
+    url: /products
+    method: GET
+    parameters: {}
+    headers:
+      Accept: application/json
+      X-API-Key: abc123
+    mapping: []
