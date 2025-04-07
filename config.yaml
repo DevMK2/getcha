@@ -1,17 +1,14 @@
 apis:
-  - host: api.example.com
-    url: /users
+  - id: "get_posts"
     method: GET
-    parameters:
-      limit: '10'
-    headers:
-      Authorization: Bearer token123
-      Content-Type: application/json
-      POST https: //api.example.com/orders
-      '"userId"': '"123",'
-      '"items"': '["item1", "item2"]'
-      PUT https: //api.example.com/products/123
-      X-API-Key: abc123
-      '"name"': '"Updated Product",'
-      '"price"': '99.99'
-    mapping: []
+    url: /posts
+    parameters: {}
+    headers: {}
+    mapping:
+      - source: "id"
+        target: "post_id"
+      - source: "title"
+        target: "title"
+      - source: "userId"
+        target: "user_id"
+    host: jsonplaceholder.typicode.com

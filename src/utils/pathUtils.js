@@ -1,17 +1,31 @@
 // 객체 경로에서 값을 가져오는 함수
 function getValueFromPath(obj, path) {
+    // [*] 형식의 경로인 경우 바로 배열 반환
+    if (path === '[*]') {
+        return Array.isArray(obj) ? obj : [obj];
+    }
+
+    // [*].field 형식의 경로인 경우
+    if (path.startsWith('[*].')) {
+        const fieldPath = path.substring(4);
+        if (Array.isArray(obj)) {
+            return obj.map(item => getValueFromPath(item, fieldPath));
+        }
+        return [getValueFromPath(obj, fieldPath)];
+    }
+
     const parts = path.split('.');
     let value = obj;
     
     for (const part of parts) {
-        if (part.includes('[*]')) {
-            const [arrayName] = part.split('[*]');
-            if (Array.isArray(value[arrayName])) {
-                return value[arrayName];
-            }
-        } else if (part.includes('[') && part.includes(']')) {
+        if (part.includes('[') && part.includes(']')) {
             const [arrayName, index] = part.split(/[\[\]]/);
-            value = value[arrayName][parseInt(index)];
+            if (arrayName) {
+                value = value[arrayName];
+            }
+            if (index !== '*') {
+                value = value[parseInt(index)];
+            }
         } else {
             value = value[part];
         }

@@ -4,59 +4,45 @@ const apiResults = require('../config/apiResults');
 const { replaceTemplateVariables } = require('../utils/pathUtils');
 const { mapResponseData } = require('./mappingService');
 
-async function processApi(apiConfig, apiId) {
-  try {
-    let response;
-    if (apiConfig.previousApiId) {
-      const previousData = apiResults.get(apiConfig.previousApiId);
-      if (previousData && Array.isArray(previousData.data)) {
-        const results = [];
-        for (const item of previousData.data) {
-          const processedConfig = {
-            ...apiConfig,
-            url: replaceTemplateVariables(apiConfig.url, { data: item }, apiConfig.previousApiId),
-            parameters: replaceTemplateVariables(apiConfig.parameters, { data: item }, apiConfig.previousApiId),
-            body: apiConfig.body ? replaceTemplateVariables(apiConfig.body, { data: item }, apiConfig.previousApiId) : undefined
-          };
+class ApiService {
+  constructor(config) {
+    this.config = config;
+  }
 
-          response = await axios({
-            method: processedConfig.method,
-            url: `https://${processedConfig.host}${processedConfig.url}`,
-            params: processedConfig.parameters,
-            headers: processedConfig.headers,
-            data: processedConfig.body
-          });
-
-          const mappedData = mapResponseData(response.data.data, processedConfig.mapping);
-          results.push(...mappedData);
-        }
-        return results;
+  async fetchData(apiId) {
+    try {
+      const apiConfig = this.config.apis.find(api => api.id === apiId);
+      if (!apiConfig) {
+        throw new Error(`API 설정을 찾을 수 없습니다: ${apiId}`);
       }
+
+      const response = await axios({
+        method: apiConfig.method,
+        url: `https://${apiConfig.host}${apiConfig.url}`,
+        params: apiConfig.parameters,
+        headers: apiConfig.headers
+      });
+
+      return this.transformData(response.data, apiConfig.mapping);
+    } catch (error) {
+      logger.error('API 호출 중 오류 발생:', error.message);
+      throw error;
+    }
+  }
+
+  transformData(data, mapping) {
+    if (!Array.isArray(data)) {
+      data = [data];
     }
 
-    // 이전 API 의존성이 없거나 단일 데이터인 경우
-    response = await axios({
-      method: apiConfig.method,
-      url: `https://${apiConfig.host}${apiConfig.url}`,
-      params: apiConfig.parameters,
-      headers: apiConfig.headers,
-      data: apiConfig.body
+    return data.map(item => {
+      const transformed = {};
+      mapping.forEach(({ source, target }) => {
+        transformed[target] = item[source];
+      });
+      return transformed;
     });
-
-    // API 응답 데이터 저장
-    if (!apiResults.has(apiId)) {
-      apiResults.set(apiId, response.data);
-    }
-
-    // 응답 데이터 매핑
-    const mappedData = mapResponseData(response.data.data, apiConfig.mapping);
-    return mappedData;
-  } catch (error) {
-    logger.error(`API 호출 중 오류 발생: ${error.message}`);
-    throw error;
   }
 }
 
-module.exports = {
-  processApi
-}; 
+module.exports = { ApiService }; 
