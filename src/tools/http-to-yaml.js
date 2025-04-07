@@ -19,82 +19,59 @@ const logger = winston.createLogger({
 
 // HTTP 요청 파싱 함수
 function parseHttpRequest(request) {
+    logger.info(`파싱 시작: ${request}`);
     // 요청을 줄 단위로 분리
-    const lines = request.split('\n').map(line => line.trim());
+    const lines = request.split('\n').map(line => line.trim()).filter(line => line);
     
     // 첫 번째 줄에서 메소드와 URL 추출
     const firstLine = lines[0];
-    const matches = firstLine.match(/^(GET|POST|PUT|DELETE|PATCH)\s+(https?:\/\/[^\s]+)/);
+    const matches = firstLine.match(/^(GET|POST|PUT|DELETE|PATCH)\s+([^\s]+)/);
     
     if (!matches) {
+        logger.error(`잘못된 첫 번째 줄 형식: ${firstLine}`);
         throw new Error('잘못된 HTTP 요청 형식입니다.');
     }
     
     const [, method, url] = matches;
     
-    try {
-        // URL 객체 생성
-        const urlObj = new URL(url);
-        
-        // 기본 설정
-        const config = {
-            host: urlObj.host,
-            url: urlObj.pathname,
-            method: method,
-            parameters: {},
-            headers: {},
-            mapping: []
-        };
+    // 기본 설정
+    const config = {
+        method: method,
+        url: url,
+        parameters: {},
+        headers: {},
+        mapping: []
+    };
 
-        // 쿼리 파라미터 추출
-        urlObj.searchParams.forEach((value, key) => {
-            config.parameters[key] = value;
-        });
-
-        // 헤더와 바디 처리
-        let bodyLines = [];
-        let isBody = false;
-        
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i];
-            
-            if (!line) {
-                isBody = true;
-                continue;
-            }
-            
-            if (isBody) {
-                bodyLines.push(line);
+    // 헤더 처리
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const [key, ...values] = line.split(':');
+        if (key && values.length > 0) {
+            const value = values.join(':').trim();
+            if (key.toUpperCase() === 'HOST') {
+                config.host = value;
             } else {
-                const [key, ...values] = line.split(':');
-                if (key && values.length > 0) {
-                    const value = values.join(':').trim();
-                    config.headers[key] = value;
-                }
+                config.headers[key] = value;
             }
         }
-
-        // JSON 바디 파싱
-        if (bodyLines.length > 0) {
-            try {
-                const bodyStr = bodyLines.join('');
-                config.body = JSON.parse(bodyStr);
-            } catch (e) {
-                logger.warn('JSON 바디 파싱 실패:', e.message);
-            }
-        }
-
-        return config;
-    } catch (error) {
-        logger.error('HTTP 요청 파싱 실패:', error);
-        throw error;
     }
+
+    // host가 없는 경우 기본값 설정
+    if (!config.host) {
+        config.host = 'localhost';
+    }
+
+    logger.info(`파싱 결과: ${JSON.stringify(config)}`);
+    return config;
 }
 
 // HTTP 파일에서 요청 추출
 function extractHttpRequests(content) {
     // HTTP 메소드로 시작하는 블록을 찾아 분리
-    const requests = content.split(/\n(?=GET|POST|PUT|DELETE|PATCH\s+https?:\/\/)/).filter(req => req.trim());
+    const requests = content.split(/\n(?=GET|POST|PUT|DELETE|PATCH)/).filter(req => req.trim());
+    logger.info(`요청 블록 발견: ${requests.length}개`);
+    logger.info(`요청 내용: ${JSON.stringify(requests)}`);
     return requests.map(req => parseHttpRequest(req.trim()));
 }
 
@@ -104,8 +81,8 @@ function convertHttpToYaml(inputFile) {
         logger.info(`변환 시작: ${inputFile}`);
         
         // 입력 파일 읽기
-        const content = fs.readFileSync(inputFile, 'utf8');
-        logger.info('입력 파일 읽기 완료');
+        const content = fs.readFileSync(inputFile, 'utf8').replace(/\r\n/g, '\n');
+        logger.info(`파일 내용: ${content}`);
         
         // HTTP 요청 추출 및 파싱
         const apis = extractHttpRequests(content);

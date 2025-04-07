@@ -1,17 +1,13 @@
 apis:
-  - host: api.example.com
-    url: /users
-    method: GET
-    parameters:
-      limit: '10'
+  - method: GET
+    url: /boa/api
+    parameters: {}
     headers:
-      Authorization: Bearer token123
-      Content-Type: application/json
-      POST https: //api.example.com/orders
-      '"userId"': '"123",'
-      '"items"': '["item1", "item2"]'
-      PUT https: //api.example.com/products/123
-      X-API-Key: abc123
-      '"name"': '"Updated Product",'
-      '"price"': '99.99'
-    mapping: []
+      X-Qlik: '1234'
+      SSO_USER: '1234'
+    mapping:
+      - source: "data[*].id"
+        target: "id"
+      - source: "data[*].name"
+        target: "name"
+    host: 10.12.12.12:8080
