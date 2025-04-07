@@ -156,7 +156,7 @@ function convertToCSV(data) {
 // 메인 함수
 async function main() {
   try {
-    const config = loadConfig(path.join(__dirname, '../config.yaml'));
+    const config = loadConfig('config.yaml');
     const results = await executeApiCalls(config);
     const csvData = convertToCSV(results);
     console.log(csvData);
