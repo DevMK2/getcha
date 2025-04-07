@@ -4,7 +4,7 @@
   "description": "API 데이터 수집기",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/index.js config.yaml",
     "test": "cross-env NODE_ENV=test jest",
     "convert:http": "node src/tools/http-to-yaml.js",
     "convert:curl": "node src/tools/curl-to-yaml.js"

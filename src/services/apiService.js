@@ -5,25 +5,15 @@ const { replaceTemplateVariables } = require('../utils/pathUtils');
 const { mapResponseData } = require('./mappingService');
 
 class ApiService {
-  constructor(config) {
-    this.config = config;
-  }
-
-  async fetchData(apiId) {
+  async fetchData(api) {
     try {
-      const apiConfig = this.config.apis.find(api => api.id === apiId);
-      if (!apiConfig) {
-        throw new Error(`API 설정을 찾을 수 없습니다: ${apiId}`);
-      }
-
       const response = await axios({
-        method: apiConfig.method,
-        url: `https://${apiConfig.host}${apiConfig.url}`,
-        params: apiConfig.parameters,
-        headers: apiConfig.headers
+        method: api.method,
+        url: api.url,
+        headers: api.headers
       });
 
-      return this.transformData(response.data, apiConfig.mapping);
+      return this.transformData(response.data, api.mapping);
     } catch (error) {
       logger.error('API 호출 중 오류 발생:', error.message);
       throw error;
@@ -37,12 +27,12 @@ class ApiService {
 
     return data.map(item => {
       const transformed = {};
-      mapping.forEach(({ source, target }) => {
-        transformed[target] = item[source];
+      mapping.forEach(({ from, to }) => {
+        transformed[to] = item[from];
       });
       return transformed;
     });
   }
 }
 
-module.exports = { ApiService }; 
+module.exports = ApiService; 
