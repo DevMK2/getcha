@@ -7,7 +7,7 @@ function getValueFromPath(obj, path) {
         if (part.includes('[*]')) {
             const [arrayName] = part.split('[*]');
             if (Array.isArray(value[arrayName])) {
-                return value[arrayName].map(item => item[parts[parts.length - 1]]);
+                return value[arrayName];
             }
         } else if (part.includes('[') && part.includes(']')) {
             const [arrayName, index] = part.split(/[\[\]]/);
@@ -30,7 +30,11 @@ function replaceTemplateVariables(template, previousData, previousApiId) {
         return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
             const [apiName, ...parts] = path.trim().split('.');
             if (apiName === previousApiId) {
-                return getValueFromPath(previousData, parts.join('.'));
+                const value = getValueFromPath(previousData, parts.join('.'));
+                if (Array.isArray(value)) {
+                    return value[0];
+                }
+                return value;
             }
             return match;
         });

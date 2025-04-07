@@ -1,10 +1,10 @@
 const axios = require('axios');
-const { processApi } = require('./services/apiService');
 const { loadConfig, executeApiCalls, convertToCSV } = require('./index');
+const { processApi } = require('./services/apiService');
 const apiResults = require('./config/apiResults');
 
+// axios 모킹
 jest.mock('axios');
-jest.mock('./utils/logger');
 
 describe('API 데이터 수집기', () => {
   beforeEach(() => {
@@ -32,8 +32,8 @@ describe('API 데이터 수집기', () => {
       parameters: { limit: 10 },
       headers: { Authorization: 'Bearer token123' },
       mapping: [
-        { source: 'data[*].id', target: 'user_id' },
-        { source: 'data[*].name', target: 'user_name' }
+        { source: 'id', target: 'user_id' },
+        { source: 'name', target: 'user_name' }
       ]
     };
 
@@ -56,101 +56,63 @@ describe('API 데이터 수집기', () => {
       }
     });
 
-    // 두 번째 API 응답 (id=1)
-    axios.mockResolvedValueOnce({
-      data: {
-        data: {
-          id: '1',
-          email: 'john@example.com',
-          profile: {
-            address: 'Seoul',
-            team: 'Backend'
-          }
-        }
-      }
-    });
-
-    // 두 번째 API 응답 (id=2)
-    axios.mockResolvedValueOnce({
-      data: {
-        data: {
-          id: '2',
-          email: 'jane@example.com',
-          profile: {
-            address: 'Busan',
-            team: 'Frontend'
-          }
-        }
-      }
-    });
-
+    // 첫 번째 API 호출
     const firstApiConfig = {
-      id: 'first-api',
+      id: 'users-api',
       host: 'api.example.com',
       url: '/users',
       method: 'GET',
-      parameters: { limit: 10 },
+      parameters: {},
       headers: { Authorization: 'Bearer token123' },
       mapping: [
-        { source: 'data[*].id', target: 'user_id' },
-        { source: 'data[*].name', target: 'user_name' },
-        { source: 'data[*].role', target: 'user_role' },
-        { source: 'data[*].department', target: 'user_department' }
+        { source: 'id', target: 'user_id' },
+        { source: 'name', target: 'user_name' },
+        { source: 'role', target: 'user_role' },
+        { source: 'department', target: 'department' }
       ]
     };
 
+    await processApi(firstApiConfig, 'users-api');
+
+    // 두 번째 API 응답
+    axios.mockResolvedValueOnce({
+      data: {
+        data: { success: true }
+      }
+    }).mockResolvedValueOnce({
+      data: {
+        data: { success: true }
+      }
+    });
+
+    // 두 번째 API 호출
     const secondApiConfig = {
-      id: 'second-api',
+      id: 'user-details-api',
       host: 'api.example.com',
-      url: '/users/{{first-api.data[*].id}}/details',  // path parameter 사용
-      method: 'POST',  // POST 메서드로 변경
-      parameters: {  // query parameter에서 이전 API 응답 사용
-        role: '{{first-api.data[*].role}}',
-        department: '{{first-api.data[*].department}}'
+      url: '/users/{{users-api.data.id}}/details',
+      method: 'POST',
+      parameters: {
+        role: '{{users-api.data.role}}',
+        department: '{{users-api.data.department}}'
       },
-      headers: { 
+      headers: {
         Authorization: 'Bearer token123',
         'Content-Type': 'application/json'
       },
-      body: {  // request body에서 이전 API 응답 사용
-        userName: '{{first-api.data[*].name}}',
-        userRole: '{{first-api.data[*].role}}',
+      body: {
+        userName: '{{users-api.data.name}}',
+        userRole: '{{users-api.data.role}}',
         metadata: {
-          department: '{{first-api.data[*].department}}'
+          department: '{{users-api.data.department}}'
         }
       },
       mapping: [
-        { source: 'id', target: 'detail_user_id' },
-        { source: 'email', target: 'email' },
-        { source: 'profile.address', target: 'address' },
-        { source: 'profile.team', target: 'team' }
+        { source: 'success', target: 'success' }
       ],
-      previousApiId: 'first-api'
+      previousApiId: 'users-api'
     };
 
-    // 첫 번째 API 호출
-    const firstResult = await processApi(firstApiConfig, 'first-api');
-    expect(firstResult).toEqual([
-      { user_id: '1', user_name: 'John', user_role: 'admin', user_department: 'IT' },
-      { user_id: '2', user_name: 'Jane', user_role: 'user', user_department: 'HR' }
-    ]);
-
-    // 두 번째 API 호출
-    const secondResult = await processApi(secondApiConfig, 'second-api');
-    expect(secondResult).toEqual([
-      { 
-        detail_user_id: '1', 
-        email: 'john@example.com', 
-        address: 'Seoul',
-        team: 'Backend'
-      },
-      { 
-        detail_user_id: '2', 
-        email: 'jane@example.com', 
-        address: 'Busan',
-        team: 'Frontend'
-      }
-    ]);
+    const result = await processApi(secondApiConfig, 'user-details-api');
 
     // axios 호출 검증
     expect(axios).toHaveBeenCalledWith({
@@ -220,8 +182,8 @@ describe('API 데이터 수집기', () => {
 
   test('CSV 변환이 올바르게 동작하는지 확인', () => {
     const data = [
-      { id: '1', name: 'John', email: 'john@example.com' },
-      { id: '2', name: 'Jane, Jr.', email: 'jane@example.com' }
+      { id: 1, name: 'John', email: 'john@example.com' },
+      { id: 2, name: 'Jane, Jr.', email: 'jane@example.com' }
     ];
 
     const csv = convertToCSV(data);

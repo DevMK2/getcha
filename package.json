@@ -5,13 +5,15 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "convert:http": "node src/tools/http-to-yaml.js",
+    "convert:curl": "node src/tools/curl-to-yaml.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.7",
+    "axios": "^1.6.8",
     "js-yaml": "^4.1.0",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
