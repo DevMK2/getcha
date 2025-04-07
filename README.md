@@ -37,24 +37,51 @@ apis:
         target: "user_name"
 ```
 
+## 변환 도구 사용하기
+
+`src/tools` 디렉토리에는 HTTP 요청을 YAML 설정으로 변환하는 도구들이 있습니다:
+
 ### curl 명령어를 YAML로 변환
 
-curl 명령어를 YAML 설정으로 변환하려면 다음 명령어를 사용하세요:
-
 ```bash
-node tools/curl-to-yaml.js <입력_파일> [출력_파일]
+npm run convert:curl <입력_파일>
 ```
 
 예시:
 ```bash
-node tools/curl-to-yaml.js tools/test-curl.txt config.yaml
+npm run convert:curl example-curl.txt
 ```
+
+### HTTP 요청을 YAML로 변환
+
+```bash
+npm run convert:http <입력_파일>
+```
+
+예시:
+```bash
+npm run convert:http example-http.txt
+```
+
+### 테스트
+
+변환 도구의 정확성은 자동화된 테스트로 검증됩니다:
+
+```bash
+npm test
+```
+
+`src/tools/tools.test.js`에서 다음 항목들을 검증합니다:
+- curl 명령어 파싱
+- HTTP 요청 형식 파싱
+- YAML 변환 정확성
+- 에러 처리
 
 ## 사용법
 
 ### 기본 실행
 ```bash
-node src/index.js
+npm start
 ```
 
 ### 테스트 실행
@@ -146,44 +173,6 @@ npm start
 
 실행하면 `output.csv` 파일이 생성됩니다.
 
-## HTTP 요청을 YAML 설정으로 변환
-
-`tools` 디렉토리에 있는 http-to-yaml 도구를 사용하여 HTTP 요청을 YAML 설정으로 변환할 수 있습니다.
-이 도구는 Postman에서 사용하는 HTTP 텍스트 형식과 호환됩니다.
-
-### 사용 방법
-
-```bash
-# tools 디렉토리로 이동
-cd tools
-
-# HTTP 요청 파일을 YAML 설정으로 변환
-node http-to-yaml.js example-http.txt
-```
-
-### 입력 파일 형식
-
-```http
-GET https://api.example.com/users?limit=10
-Authorization: Bearer token123
-Content-Type: application/json
-
-POST https://api.example.com/orders
-Content-Type: application/json
-Authorization: Bearer token123
-
-{
-    "userId": "123",
-    "items": ["item1", "item2"]
-}
-```
-
-### 백업 기능
-
-- 변환 시 기존 `config.yaml` 파일이 존재하는 경우, 자동으로 `config_backup` 디렉토리에 `config.backup.{UUID}.yaml` 형식으로 백업됩니다.
-- UUID는 자동으로 생성되며, 각 백업 파일은 고유한 식별자를 가집니다.
-- 백업 파일은 프로젝트 루트의 `config_backup` 디렉토리에 저장됩니다.
-
 ## 로그
 
 - `error.log`: 오류 로그
@@ -198,4 +187,61 @@ Authorization: Bearer token123
 
 ## 라이선스
 
-MIT License 
+MIT License
+
+## 프로젝트 구조
+
+```
+src/
+  ├── config/          # 설정 관련 모듈
+  │   └── apiResults.js
+  ├── services/        # 핵심 서비스 모듈
+  │   ├── apiService.js
+  │   ├── mappingService.js
+  │   └── templateService.js
+  ├── utils/          # 유틸리티 모듈
+  │   ├── logger.js
+  │   └── pathUtils.js
+  ├── tools/          # 변환 도구
+  │   ├── curl-to-yaml.js
+  │   ├── http-to-yaml.js
+  │   └── tools.test.js
+  └── index.js        # 메인 엔트리 포인트
+```
+
+## 고급 기능
+
+### 템플릿 변수
+
+API 설정에서 이전 API 응답의 데이터를 참조할 수 있습니다:
+
+```yaml
+apis:
+  - id: "users-api"
+    host: "api.example.com"
+    url: "/users"
+    method: "GET"
+    
+  - id: "user-details"
+    host: "api.example.com"
+    url: "/users/{{users-api.data.id}}/details"
+    parameters:
+      role: "{{users-api.data.role}}"
+    previousApiId: "users-api"
+```
+
+### API 의존성
+
+`previousApiId`를 설정하여 이전 API 응답 데이터를 기반으로 여러 요청을 실행할 수 있습니다:
+
+```yaml
+apis:
+  - id: "departments"
+    host: "api.example.com"
+    url: "/departments"
+    
+  - id: "department-users"
+    host: "api.example.com"
+    url: "/departments/{{departments.data.id}}/users"
+    previousApiId: "departments"
+``` 

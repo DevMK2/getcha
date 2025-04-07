@@ -1,32 +1,17 @@
 apis:
-  - id: "first-api"
-    name: "사용자 목록 조회"
-    host: "api.example.com"
-    url: "/users"
-    method: "GET"
+  - host: api.example.com
+    url: /users
+    method: GET
     parameters:
-      limit: 10
+      limit: '10'
     headers:
-      Authorization: "Bearer token123"
-    mapping:
-      - source: "data[*].id"
-        target: "user_id"
-      - source: "data[*].name"
-        target: "user_name"
-
-  - id: "second-api"
-    name: "사용자 상세 정보 조회"
-    host: "api.example.com"
-    url: "/users/{{first-api.result[0].id}}"
-    method: "GET"
-    parameters:
-      include: "profile"
-    headers:
-      Authorization: "Bearer token123"
-    mapping:
-      - source: "data.id"
-        target: "detail_user_id"
-      - source: "data.email"
-        target: "email"
-      - source: "data.profile.address"
-        target: "address"
+      Authorization: Bearer token123
+      Content-Type: application/json
+      POST https: //api.example.com/orders
+      '"userId"': '"123",'
+      '"items"': '["item1", "item2"]'
+      PUT https: //api.example.com/products/123
+      X-API-Key: abc123
+      '"name"': '"Updated Product",'
+      '"price"': '99.99'
+    mapping: []

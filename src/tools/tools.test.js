@@ -29,13 +29,22 @@ Content-Type: application/json
       fs.readFileSync.mockReturnValue(httpContent);
       fs.existsSync.mockReturnValue(true);
 
-      convertHttpToYaml('example-http.txt');
+      const result = convertHttpToYaml('example-http.txt');
 
       // YAML 파일 저장 검증
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining('config.yaml'),
         expect.stringContaining('host: api.example.com')
       );
+
+      // 결과 검증
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        host: 'api.example.com',
+        url: '/users',
+        method: 'GET',
+        parameters: { limit: '10' }
+      });
     });
 
     test('여러 HTTP 요청 처리', () => {
@@ -53,12 +62,24 @@ Content-Type: application/json
       fs.readFileSync.mockReturnValue(httpContent);
       fs.existsSync.mockReturnValue(true);
 
-      convertHttpToYaml('example-http.txt');
+      const result = convertHttpToYaml('example-http.txt');
 
       // 두 개의 API 설정이 생성되었는지 확인
-      const yamlContent = fs.writeFileSync.mock.calls[0][1];
-      expect(yamlContent).toContain('apis:');
-      expect(yamlContent.match(/host:/g)).toHaveLength(2);
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        host: 'api.example.com',
+        url: '/users',
+        method: 'GET'
+      });
+      expect(result[1]).toMatchObject({
+        host: 'api.example.com',
+        url: '/users',
+        method: 'POST',
+        body: {
+          name: 'John',
+          email: 'john@example.com'
+        }
+      });
     });
   });
 
@@ -72,7 +93,7 @@ Content-Type: application/json
       fs.readFileSync.mockReturnValue(curlContent);
       fs.existsSync.mockReturnValue(true);
 
-      convertCurlToYaml('example-curl.txt', 'config.yaml');
+      convertCurlToYaml('example-curl.txt');
 
       // YAML 파일 저장 검증
       expect(fs.writeFileSync).toHaveBeenCalledWith(
@@ -93,7 +114,7 @@ curl -X POST https://api.example.com/users \\
       fs.readFileSync.mockReturnValue(curlContent);
       fs.existsSync.mockReturnValue(true);
 
-      convertCurlToYaml('example-curl.txt', 'config.yaml');
+      convertCurlToYaml('example-curl.txt');
 
       // 두 개의 API 설정이 생성되었는지 확인
       const yamlContent = fs.writeFileSync.mock.calls[0][1];

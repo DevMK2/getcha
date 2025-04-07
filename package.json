@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest",
+    "test": "cross-env NODE_ENV=test jest",
     "convert:http": "node src/tools/http-to-yaml.js",
     "convert:curl": "node src/tools/curl-to-yaml.js"
   },
@@ -19,6 +19,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0"
   }
 }
