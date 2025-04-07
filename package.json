@@ -1,19 +1,20 @@
 {
-  "name": "api-to-csv",
+  "name": "getcha",
   "version": "1.0.0",
-  "description": "API 응답을 CSV로 변환하는 애플리케이션",
+  "description": "API 데이터 수집기",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "test": "jest"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "axios": "^1.6.7",
-    "js-yaml": "^4.1.0",
-    "winston": "^3.11.0",
-    "uuid": "^9.0.1"
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "jest": "^29.7.0"
   }
-} 
+}
