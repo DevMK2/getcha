@@ -1,16 +1,16 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const { processApi } = require('./index');
+const { processApi } = require('./services/apiService');
+const { loadConfig, executeApiCalls, convertToCSV } = require('./index');
+const apiResults = require('./config/apiResults');
 
-// axios 모킹
 jest.mock('axios');
+jest.mock('./utils/logger');
 
 describe('API 데이터 수집기', () => {
   beforeEach(() => {
     // 각 테스트 전에 axios 모킹 초기화
     axios.mockClear();
+    apiResults.clear();
   });
 
   test('단일 API 호출 및 데이터 매핑', async () => {
@@ -212,8 +212,25 @@ describe('API 데이터 수집기', () => {
   });
 
   test('config.yaml 파일이 올바르게 로드되는지 확인', () => {
-    const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yaml'), 'utf8'));
+    const config = loadConfig('test/fixtures/config.yaml');
     expect(config).toBeDefined();
-    expect(config.apis).toBeInstanceOf(Array);
+    expect(config.apis).toBeDefined();
+    expect(Array.isArray(config.apis)).toBe(true);
+  });
+
+  test('CSV 변환이 올바르게 동작하는지 확인', () => {
+    const data = [
+      { id: '1', name: 'John', email: 'john@example.com' },
+      { id: '2', name: 'Jane, Jr.', email: 'jane@example.com' }
+    ];
+
+    const csv = convertToCSV(data);
+    expect(csv).toBe('id,name,email\n1,John,john@example.com\n2,"Jane, Jr.",jane@example.com');
+  });
+
+  test('CSV 변환 시 빈 데이터 처리', () => {
+    expect(convertToCSV([])).toBe('');
+    expect(convertToCSV(null)).toBe('');
+    expect(convertToCSV(undefined)).toBe('');
   });
 }); 

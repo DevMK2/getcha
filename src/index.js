@@ -3,9 +3,11 @@ const path = require('path');
 const yaml = require('js-yaml');
 const axios = require('axios');
 const winston = require('winston');
+const { processApi } = require('./services/apiService');
+const logger = require('./utils/logger');
 
 // 로거 설정
-const logger = winston.createLogger({
+const apiLogger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
@@ -54,13 +56,13 @@ function replaceTemplateVariables(template, previousData, previousApiId) {
   return template;
 }
 
-// 설정 파일 로드
-function loadConfig() {
+// YAML 설정 파일 로드
+function loadConfig(configPath) {
   try {
-    const configFile = fs.readFileSync(path.join(__dirname, '../config.yaml'), 'utf8');
+    const configFile = fs.readFileSync(configPath, 'utf8');
     return yaml.load(configFile);
   } catch (error) {
-    logger.error('설정 파일 로드 실패:', error);
+    logger.error(`설정 파일 로드 중 오류 발생: ${error.message}`);
     throw error;
   }
 }
@@ -81,7 +83,7 @@ async function callApi(apiConfig) {
     });
     return response.data;
   } catch (error) {
-    logger.error(`API 호출 실패 - Host: ${apiConfig.host}, URL: ${apiConfig.url}`, {
+    apiLogger.error(`API 호출 실패 - Host: ${apiConfig.host}, URL: ${apiConfig.url}`, {
       error: error.message,
       status: error.response?.status,
       data: error.response?.data
@@ -100,7 +102,7 @@ function createCsvRow(data, mapping) {
 
 // CSV 테이블 생성
 async function generateCsvTable() {
-  const config = loadConfig();
+  const config = loadConfig(path.join(__dirname, '../config.yaml'));
   const csvRows = [];
 
   // 헤더 행 생성
@@ -119,158 +121,59 @@ async function generateCsvTable() {
   return csvRows.join('\n');
 }
 
-// API 호출 함수
-async function processApi(apiConfig, apiId) {
+// API 호출 실행
+async function executeApiCalls(config) {
   try {
-    // URL 템플릿 변수 치환
-    let urls = [apiConfig.url];
-    let parametersList = [{ ...apiConfig.parameters }];
-    let requestBodyList = apiConfig.body ? [{ ...apiConfig.body }] : [undefined];
-
-    if (apiConfig.previousApiId) {
-      const previousData = apiResults.get(apiConfig.previousApiId);
-      if (previousData) {
-        // URL 템플릿 처리
-        const processedUrls = [];
-        const processedParams = [];
-        const processedBodies = [];
-
-        // data[*] 형식이 있는지 확인
-        const hasArrayPattern = urls[0].includes('[*]') || 
-          JSON.stringify(parametersList[0]).includes('[*]') || 
-          (requestBodyList[0] && JSON.stringify(requestBodyList[0]).includes('[*]'));
-
-        if (hasArrayPattern && Array.isArray(previousData.data)) {
-          // 배열 데이터에 대해 각각 처리
-          for (const item of previousData.data) {
-            const itemData = { data: [item] };
-            
-            // URL 처리
-            const processedUrl = replaceTemplateVariables(urls[0], itemData, apiConfig.previousApiId);
-            processedUrls.push(processedUrl);
-
-            // Parameters 처리
-            const processedParam = replaceTemplateVariables(parametersList[0], itemData, apiConfig.previousApiId);
-            processedParams.push(processedParam);
-
-            // Request Body 처리
-            if (requestBodyList[0]) {
-              const processedBody = replaceTemplateVariables(requestBodyList[0], itemData, apiConfig.previousApiId);
-              processedBodies.push(processedBody);
-            } else {
-              processedBodies.push(undefined);
-            }
-          }
-
-          urls = processedUrls;
-          parametersList = processedParams;
-          requestBodyList = processedBodies;
-        } else {
-          // 단일 데이터 처리
-          urls = [replaceTemplateVariables(urls[0], previousData, apiConfig.previousApiId)];
-          parametersList = [replaceTemplateVariables(parametersList[0], previousData, apiConfig.previousApiId)];
-          if (requestBodyList[0]) {
-            requestBodyList = [replaceTemplateVariables(requestBodyList[0], previousData, apiConfig.previousApiId)];
-          }
-        }
-      }
-    }
-
     const results = [];
-    
-    // 각 URL에 대해 API 호출 수행
-    for (let i = 0; i < urls.length; i++) {
-      try {
-        const response = await axios({
-          method: apiConfig.method,
-          url: `https://${apiConfig.host}${urls[i]}`,
-          params: parametersList[i],
-          headers: apiConfig.headers,
-          data: requestBodyList[i]
-        });
-
-        // API 응답 데이터 저장
-        if (!apiResults.has(apiId)) {
-          apiResults.set(apiId, response.data);
-        }
-
-        // 응답 데이터 매핑
-        const data = response.data.data;
-        
-        // 데이터가 배열인 경우와 단일 객체인 경우를 구분하여 처리
-        const items = Array.isArray(data) ? data : [data];
-        
-        for (const item of items) {
-          const mappedItem = {};
-          for (const mapping of apiConfig.mapping) {
-            const sourcePath = mapping.source.split('.');
-            const targetField = mapping.target;
-            
-            let value = item;
-            // data[*] 형식의 경로 처리
-            if (sourcePath[0] === 'data[*]') {
-              value = item[sourcePath[1]];
-            } else {
-              // 중첩된 객체 구조 처리
-              for (const key of sourcePath) {
-                if (value && typeof value === 'object') {
-                  value = value[key];
-                } else {
-                  value = undefined;
-                  break;
-                }
-              }
-            }
-            mappedItem[targetField] = value;
-          }
-          results.push(mappedItem);
-        }
-      } catch (error) {
-        logger.error(`API 호출 중 오류 발생: ${error.message}`);
-        throw error;
-      }
+    for (const api of config.apis) {
+      const result = await processApi(api, api.id);
+      results.push(...result);
     }
-
     return results;
   } catch (error) {
-    logger.error(`API 호출 중 오류 발생: ${error.message}`);
+    logger.error(`API 호출 실행 중 오류 발생: ${error.message}`);
     throw error;
   }
+}
+
+// CSV 형식으로 변환
+function convertToCSV(data) {
+  if (!data || data.length === 0) return '';
+  
+  const headers = Object.keys(data[0]);
+  const rows = data.map(item => 
+    headers.map(header => {
+      const value = item[header];
+      // 문자열이고 쉼표를 포함하는 경우에만 큰따옴표로 감싸기
+      return typeof value === 'string' && value.includes(',') ? 
+        `"${value}"` : value;
+    }).join(',')
+  );
+  
+  return [headers.join(','), ...rows].join('\n');
 }
 
 // 메인 함수
 async function main() {
   try {
-    // config.yaml 파일 읽기
-    const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yaml'), 'utf8'));
-    
-    // 각 API 호출 및 데이터 수집
-    const results = [];
-    for (const api of config.apis) {
-      logger.info(`API 호출 중: ${api.name}`);
-      const data = await processApi(api, api.id);
-      results.push(...data);
-    }
-
-    // CSV 형식으로 변환
-    const headers = config.apis[0].mapping.map(m => m.target).join(',');
-    const rows = results.map(item => Object.values(item).join(','));
-    const csv = [headers, ...rows].join('\n');
-    
-    logger.info('변환된 CSV 데이터:');
-    logger.info(csv);
+    const config = loadConfig(path.join(__dirname, '../config.yaml'));
+    const results = await executeApiCalls(config);
+    const csvData = convertToCSV(results);
+    console.log(csvData);
   } catch (error) {
-    logger.error('프로그램 실행 중 오류 발생:', error);
+    logger.error(`프로그램 실행 중 오류 발생: ${error.message}`);
     process.exit(1);
   }
 }
 
-// 테스트를 위해 processApi 함수 내보내기
-module.exports = {
-  processApi
-};
-
-// 직접 실행 시에만 main 함수 호출
+// 프로그램 실행
 if (require.main === module) {
   main();
-} 
+}
+
+module.exports = {
+  loadConfig,
+  executeApiCalls,
+  convertToCSV,
+  main
+}; 
