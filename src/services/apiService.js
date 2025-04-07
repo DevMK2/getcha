@@ -1,7 +1,7 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 const apiResults = require('../config/apiResults');
-const { replaceTemplateVariables } = require('./templateService');
+const { replaceTemplateVariables } = require('../utils/pathUtils');
 const { mapResponseData } = require('./mappingService');
 
 async function processApi(apiConfig, apiId) {

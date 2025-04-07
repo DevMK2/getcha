@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
-const { v4: uuidv4 } = require('uuid');
+const { backupConfig, saveYamlConfig } = require('./utils');
 
 // curl 명령어 파싱 함수
 function parseCurlCommand(curlCommand) {
@@ -60,30 +59,13 @@ function parseCurlCommand(curlCommand) {
     if (dataMatch) {
         try {
             const data = JSON.parse(dataMatch[1]);
-            Object.assign(config.parameters, data);
+            config.body = data;
         } catch (e) {
             console.warn('데이터 파싱 실패:', e.message);
         }
     }
 
     return config;
-}
-
-// 기존 config.yaml 백업
-function backupConfig() {
-    const rootConfigPath = path.join(__dirname, '..', 'config.yaml');
-    if (fs.existsSync(rootConfigPath)) {
-        // 백업 디렉토리 생성
-        const backupDir = path.join(__dirname, '..', 'config_backup');
-        if (!fs.existsSync(backupDir)) {
-            fs.mkdirSync(backupDir);
-        }
-        
-        const backupFileName = `config.backup.${uuidv4()}.yaml`;
-        const backupPath = path.join(backupDir, backupFileName);
-        fs.copyFileSync(rootConfigPath, backupPath);
-        console.log(`기존 설정 파일 백업 완료: ${backupFileName}`);
-    }
 }
 
 // 메인 함수
@@ -103,22 +85,12 @@ function convertCurlToYaml(inputFile, outputFile) {
             process.exit(1);
         }
         
-        // YAML 형식으로 변환
-        const yamlContent = yaml.dump({ apis }, {
-            lineWidth: -1,
-            noRefs: true,
-            sortKeys: false
-        });
-        
         // 기존 config.yaml 백업
         backupConfig();
         
         // 루트 디렉토리에 config.yaml 저장
         const outputPath = path.join(__dirname, '..', outputFile);
-        fs.writeFileSync(outputPath, yamlContent);
-        
-        console.log(`변환 완료: ${outputPath}`);
-        console.log(`${apis.length}개의 API 설정이 생성되었습니다.`);
+        saveYamlConfig(apis, outputPath);
         
     } catch (error) {
         console.error('변환 중 오류 발생:', error.message);
@@ -126,13 +98,6 @@ function convertCurlToYaml(inputFile, outputFile) {
     }
 }
 
-// 커맨드 라인 인자 처리
-const inputFile = process.argv[2];
-const outputFile = process.argv[3] || 'config.yaml';
-
-if (!inputFile) {
-    console.error('사용법: node curl-to-yaml.js <입력_파일> [출력_파일]');
-    process.exit(1);
-}
-
-convertCurlToYaml(inputFile, outputFile); 
+module.exports = {
+    convertCurlToYaml
+}; 

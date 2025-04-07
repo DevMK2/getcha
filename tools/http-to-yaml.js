@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
-const { v4: uuidv4 } = require('uuid');
+const { backupConfig, saveYamlConfig } = require('./utils');
 
 // HTTP 요청 파싱 함수
 function parseHttpRequest(content) {
@@ -75,23 +74,6 @@ function extractHttpRequests(content) {
     return requests;
 }
 
-// 기존 config.yaml 백업
-function backupConfig() {
-    const rootConfigPath = path.join(__dirname, '..', 'config.yaml');
-    if (fs.existsSync(rootConfigPath)) {
-        // 백업 디렉토리 생성
-        const backupDir = path.join(__dirname, '..', 'config_backup');
-        if (!fs.existsSync(backupDir)) {
-            fs.mkdirSync(backupDir);
-        }
-        
-        const backupFileName = `config.backup.${uuidv4()}.yaml`;
-        const backupPath = path.join(backupDir, backupFileName);
-        fs.copyFileSync(rootConfigPath, backupPath);
-        console.log(`기존 설정 파일 백업 완료: ${backupFileName}`);
-    }
-}
-
 // 메인 함수
 function convertHttpToYaml(inputFile) {
     try {
@@ -106,22 +88,12 @@ function convertHttpToYaml(inputFile) {
             process.exit(1);
         }
         
-        // YAML 형식으로 변환
-        const yamlContent = yaml.dump({ apis }, {
-            lineWidth: -1,
-            noRefs: true,
-            sortKeys: false
-        });
-        
         // 기존 config.yaml 백업
         backupConfig();
         
         // 루트 디렉토리에 config.yaml 저장
         const outputPath = path.join(__dirname, '..', 'config.yaml');
-        fs.writeFileSync(outputPath, yamlContent);
-        
-        console.log(`변환 완료: ${outputPath}`);
-        console.log(`${apis.length}개의 API 설정이 생성되었습니다.`);
+        saveYamlConfig(apis, outputPath);
         
     } catch (error) {
         console.error('변환 중 오류 발생:', error.message);
@@ -129,12 +101,6 @@ function convertHttpToYaml(inputFile) {
     }
 }
 
-// 커맨드 라인 인자 처리
-const inputFile = process.argv[2];
-
-if (!inputFile) {
-    console.error('사용법: node http-to-yaml.js <HTTP_파일>');
-    process.exit(1);
-}
-
-convertHttpToYaml(inputFile); 
+module.exports = {
+    convertHttpToYaml
+}; 
