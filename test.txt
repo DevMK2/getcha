@@ -1,4 +1,0 @@
-GET /boa/api HTTP/1.1
-HOST: 10.12.12.12:8080
-X-Qlik: 1234
-SSO_USER: 1234 
