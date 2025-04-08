@@ -1,66 +1,61 @@
 apis:
   - id: users-get
     name: GET users
-    description: GET 요청을 api.example.com에 보냅니다
+    description: GET 요청을 JSONPlaceholder API에 보냅니다
     method: GET
-    url: https://api.example.com/users
+    url: https://jsonplaceholder.typicode.com/users
     headers:
       Content-Type: application/json
-      Authorization: Bearer token123
     mapping:
       - from: id
         to: ID
-      - from: title
-        to: 제목
-      - from: content
-        to: 내용
+      - from: name
+        to: 이름
+      - from: email
+        to: 이메일
   - id: posts-post
     name: POST posts
-    description: POST 요청을 api.example.com에 보냅니다
+    description: POST 요청을 JSONPlaceholder API에 보냅니다
     method: POST
-    url: https://api.example.com/posts
+    url: https://jsonplaceholder.typicode.com/posts
     headers:
       Content-Type: application/json
-      Authorization: Bearer token123
     mapping:
       - from: id
         to: ID
       - from: title
         to: 제목
-      - from: content
+      - from: body
         to: 내용
     body:
       title: Test Post
-      content: Hello World
+      body: Hello World
+      userId: 1
   - id: 1-put
     name: PUT 1
-    description: PUT 요청을 api.example.com에 보냅니다
+    description: PUT 요청을 JSONPlaceholder API에 보냅니다
     method: PUT
-    url: https://api.example.com/posts/1
+    url: https://jsonplaceholder.typicode.com/posts/1
     headers:
       Content-Type: application/json
-      Authorization: Bearer token123
     mapping:
       - from: id
         to: ID
       - from: title
         to: 제목
-      - from: content
+      - from: body
         to: 내용
     body:
       title: Updated Post
-      content: Updated Content
+      body: Updated Content
+      userId: 1
   - id: 1-delete
     name: DELETE 1
-    description: DELETE 요청을 api.example.com에 보냅니다
+    description: DELETE 요청을 JSONPlaceholder API에 보냅니다
     method: DELETE
-    url: https://api.example.com/posts/1
+    url: https://jsonplaceholder.typicode.com/posts/1
     headers:
-      Authorization: Bearer token123
+      Content-Type: application/json
     mapping:
       - from: id
         to: ID
-      - from: title
-        to: 제목
-      - from: content
-        to: 내용
