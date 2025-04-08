@@ -57,7 +57,7 @@ async function main() {
     const results = await executeApiCalls(config);
     
     logger.info('CSV 변환을 시작합니다...');
-    await convertToCsv(results, config.output);
+    await convertToCsv(results, config.output || 'output.csv');
     
     logger.info('모든 작업이 완료되었습니다.');
   } catch (error) {

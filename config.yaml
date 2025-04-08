@@ -1,4 +1,3 @@
-output: output.csv
 apis:
   - id: get-posts
     name: 게시물 목록 조회
