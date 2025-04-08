@@ -1,4 +1,5 @@
 const axios = require('axios');
+const https = require('https');
 const logger = require('../utils/logger');
 const apiResults = require('../config/apiResults');
 const { replaceTemplateVariables } = require('../utils/pathUtils');
@@ -15,7 +16,10 @@ class ApiService {
         method: this.config.method,
         url: this.config.url,
         headers: this.config.headers,
-        data: this.config.body
+        data: this.config.body,
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false // SSL 인증서 검증 비활성화 (개발 환경에서만 사용)
+        })
       });
 
       // 응답에 설정 정보 포함
