@@ -1,11 +1,11 @@
 {
   "name": "getcha",
   "version": "1.0.0",
-  "description": "API 데이터 수집기",
+  "description": "API 데이터 수집 및 CSV 변환 도구",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js config.yaml",
-    "test": "cross-env NODE_ENV=test jest",
+    "start": "node src/index.js",
+    "test": "jest",
     "convert:http": "node src/tools/http-to-yaml.js",
     "convert:curl": "node src/tools/curl-to-yaml.js"
   },
@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
+    "axios": "^1.6.7",
     "js-yaml": "^4.1.0",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
