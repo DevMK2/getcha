@@ -23,6 +23,7 @@ out/
 # 로그 파일
 logs/
 *.log
+error.log
 
 # 시스템 파일
 .DS_Store
@@ -30,7 +31,11 @@ Thumbs.db
 
 # 프로젝트 특정 파일
 output.csv
-config.local.yaml
+output.yaml
+config*.yaml
+*.txt
+config_backup/
+coverage/
 
 # 기타 설정
 *.env
