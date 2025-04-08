@@ -5,30 +5,39 @@ const { replaceTemplateVariables } = require('../utils/pathUtils');
 const { mapResponseData } = require('./mappingService');
 
 class ApiService {
-  async fetchData(api) {
+  constructor(config) {
+    this.config = config;
+  }
+
+  async fetchData() {
     try {
       const response = await axios({
-        method: api.method,
-        url: api.url,
-        headers: api.headers
+        method: this.config.method,
+        url: this.config.url,
+        headers: this.config.headers,
+        data: this.config.body
       });
 
-      return this.transformData(response.data, api.mapping);
+      // 응답에 설정 정보 포함
+      return {
+        data: response.data,
+        config: this.config
+      };
     } catch (error) {
-      logger.error('API 호출 중 오류 발생:', error.message);
+      logger.error(`API 호출 중 오류 발생 (${this.config.method} ${this.config.url.split('/').pop()}):`, error);
       throw error;
     }
   }
 
-  transformData(data, mapping) {
+  transformData(data) {
     if (!Array.isArray(data)) {
       data = [data];
     }
 
     return data.map(item => {
       const transformed = {};
-      mapping.forEach(({ from, to }) => {
-        transformed[to] = item[from];
+      this.config.mapping.forEach(({ from, to }) => {
+        transformed[to] = item[from] ?? '';
       });
       return transformed;
     });

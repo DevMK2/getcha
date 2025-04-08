@@ -1,0 +1,61 @@
+apis:
+  - id: users-get
+    name: GET users
+    description: GET 요청을 JSONPlaceholder API에 보냅니다
+    method: GET
+    url: https://jsonplaceholder.typicode.com/users
+    headers:
+      Content-Type: application/json
+    mapping:
+      - from: id
+        to: ID
+      - from: name
+        to: 이름
+      - from: email
+        to: 이메일
+  - id: posts-post
+    name: POST posts
+    description: POST 요청을 JSONPlaceholder API에 보냅니다
+    method: POST
+    url: https://jsonplaceholder.typicode.com/posts
+    headers:
+      Content-Type: application/json
+    body:
+      title: Test Post
+      body: Hello World
+      userId: 1
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: body
+        to: 내용
+  - id: 1-put
+    name: PUT 1
+    description: PUT 요청을 JSONPlaceholder API에 보냅니다
+    method: PUT
+    url: https://jsonplaceholder.typicode.com/posts/1
+    headers:
+      Content-Type: application/json
+    body:
+      title: Updated Post
+      body: Updated Content
+      userId: 1
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: body
+        to: 내용
+  - id: 1-delete
+    name: DELETE 1
+    description: DELETE 요청을 JSONPlaceholder API에 보냅니다
+    method: DELETE
+    url: https://jsonplaceholder.typicode.com/posts/1
+    headers:
+      Content-Type: application/json
+    mapping:
+      - from: id
+        to: ID

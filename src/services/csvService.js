@@ -2,33 +2,55 @@ const logger = require('../utils/logger');
 
 class CsvService {
   convertToCsv(data) {
-    if (!data || !Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       return '';
     }
 
-    // 모든 가능한 필드를 수집
-    const fields = new Set();
-    data.forEach(item => {
-      Object.keys(item).forEach(key => fields.add(key));
-    });
+    try {
+      // 각 API 응답에서 매핑된 데이터 추출
+      const mappedData = data.flatMap(response => {
+        const responseData = Array.isArray(response.data) ? response.data : [response.data];
+        return responseData.map(item => {
+          const mappedItem = {};
+          if (response.config && response.config.mapping) {
+            response.config.mapping.forEach(map => {
+              mappedItem[map.to] = item[map.from];
+            });
+          }
+          return mappedItem;
+        });
+      });
 
-    const headers = Array.from(fields);
-    const rows = data.map(item => 
-      headers.map(field => this.escapeValue(item[field] || '')).join(',')
-    );
+      // 모든 헤더(매핑된 필드) 수집
+      const headers = [...new Set(mappedData.flatMap(item => Object.keys(item)))];
+      const headerRow = headers.join(',');
+      
+      // 각 행의 데이터 생성
+      const rows = mappedData.map(item => {
+        return headers.map(header => {
+          const value = item[header] ?? '';
+          return this.escapeValue(value);
+        }).join(',');
+      });
 
-    return [headers.join(','), ...rows].join('\n');
+      return [headerRow, ...rows].join('\n');
+    } catch (error) {
+      logger.error('CSV 변환 중 오류 발생:', error);
+      throw error;
+    }
   }
 
   escapeValue(value) {
     if (value === null || value === undefined) {
       return '';
     }
-    value = String(value);
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
+
+    const stringValue = String(value);
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
     }
-    return value;
+
+    return stringValue;
   }
 }
 

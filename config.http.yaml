@@ -1,0 +1,66 @@
+apis:
+  - id: users-get
+    name: GET users
+    description: GET 요청을 api.example.com에 보냅니다
+    method: GET
+    url: https://api.example.com/users
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer token123
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: content
+        to: 내용
+  - id: posts-post
+    name: POST posts
+    description: POST 요청을 api.example.com에 보냅니다
+    method: POST
+    url: https://api.example.com/posts
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer token123
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: content
+        to: 내용
+    body:
+      title: Test Post
+      content: Hello World
+  - id: 1-put
+    name: PUT 1
+    description: PUT 요청을 api.example.com에 보냅니다
+    method: PUT
+    url: https://api.example.com/posts/1
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer token123
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: content
+        to: 내용
+    body:
+      title: Updated Post
+      content: Updated Content
+  - id: 1-delete
+    name: DELETE 1
+    description: DELETE 요청을 api.example.com에 보냅니다
+    method: DELETE
+    url: https://api.example.com/posts/1
+    headers:
+      Authorization: Bearer token123
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: content
+        to: 내용

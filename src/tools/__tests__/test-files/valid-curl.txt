@@ -1,0 +1,3 @@
+curl -X GET "https://api.example.com/users" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123" 

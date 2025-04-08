@@ -1,10 +1,16 @@
-curl -X GET "https://api.example.com/users?limit=10" -H "Authorization: Bearer token123"
+curl -X GET "https://api.example.com/users" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123"
 
-curl -X POST "https://api.example.com/orders" \
+curl -X POST "https://api.example.com/posts" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer token123" \
-  -d '{"userId": "123", "items": ["item1", "item2"]}'
+  -d '{"title": "Test Post", "content": "Hello World"}'
 
-curl "https://api.example.com/products" \
-  -H "Accept: application/json" \
-  -H "X-API-Key: abc123" 
+curl -X PUT "https://api.example.com/posts/1" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123" \
+  -d '{"title": "Updated Post", "content": "Updated Content"}'
+
+curl -X DELETE "https://api.example.com/posts/1" \
+  -H "Authorization: Bearer token123" 

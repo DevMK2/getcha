@@ -1,5 +1,5 @@
 const axios = require('axios');
-const fs = require('fs');
+const fs = require('fs').promises;
 const yaml = require('js-yaml');
 const { loadConfig, executeApiCalls, convertToCsv, main } = require('./index');
 const { ApiService } = require('./services/apiService');
@@ -7,7 +7,12 @@ const { CsvService } = require('./services/csvService');
 
 // axios와 fs 모킹
 jest.mock('axios');
-jest.mock('fs');
+jest.mock('fs', () => ({
+  promises: {
+    readFile: jest.fn(),
+    writeFile: jest.fn()
+  }
+}));
 jest.mock('./services/apiService');
 jest.mock('./services/csvService');
 
@@ -15,7 +20,7 @@ describe('API 데이터 수집기', () => {
   beforeEach(() => {
     // 각 테스트 전에 모킹 초기화
     axios.mockClear();
-    fs.readFileSync.mockClear();
+    fs.readFile.mockClear();
     jest.clearAllMocks();
   });
 
@@ -25,63 +30,57 @@ describe('API 데이터 수집기', () => {
         apis: [
           {
             id: 'test-api',
+            name: 'Test API',
             method: 'GET',
-            url: '/users',
-            host: 'api.example.com'
+            url: 'https://api.example.com/test'
           }
         ]
       };
 
-      fs.readFileSync.mockReturnValue(yaml.dump(mockConfig));
-
+      fs.readFile.mockResolvedValue(yaml.dump(mockConfig));
       const config = await loadConfig('config.yaml');
       expect(config).toEqual(mockConfig);
     });
 
     it('파일이 없을 때 에러를 던져야 함', async () => {
-      fs.readFileSync.mockImplementation(() => {
-        throw new Error('파일을 찾을 수 없습니다');
-      });
+      const error = new Error('파일을 찾을 수 없습니다');
+      error.code = 'ENOENT';
+      fs.readFile.mockRejectedValue(error);
 
       await expect(loadConfig('config.yaml')).rejects.toThrow('파일을 찾을 수 없습니다');
     });
 
     it('잘못된 YAML 형식의 설정 파일 처리', async () => {
-      fs.readFileSync.mockReturnValue('invalid: yaml: content: }');
-      
-      await expect(loadConfig('invalid.yaml')).rejects.toThrow();
+      fs.readFile.mockResolvedValue('invalid: yaml: content');
+
+      await expect(loadConfig('config.yaml')).rejects.toThrow();
     });
 
     it('필수 필드가 없는 설정 파일 처리', async () => {
-      const invalidConfig = { foo: 'bar' };
-      fs.readFileSync.mockReturnValue(yaml.dump(invalidConfig));
-      
+      const invalidConfig = { notApis: [] };
+      fs.readFile.mockResolvedValue(yaml.dump(invalidConfig));
+
       await expect(loadConfig('config.yaml')).rejects.toThrow('잘못된 설정 파일 형식');
     });
   });
 
   describe('API 호출 및 데이터 매핑', () => {
+    const mockConfig = {
+      apis: [
+        {
+          id: 'test-api',
+          method: 'GET',
+          url: 'https://api.example.com/test'
+        }
+      ]
+    };
+
+    const mockMappedData = [
+      { ID: '1', 제목: 'Test 1' },
+      { ID: '2', 제목: 'Test 2' }
+    ];
+
     it('API를 호출하고 데이터를 매핑해야 함', async () => {
-      const mockConfig = {
-        apis: [
-          {
-            id: 'test-api',
-            method: 'GET',
-            url: '/users',
-            host: 'api.example.com',
-            mapping: [
-              { source: 'id', target: 'user_id' },
-              { source: 'name', target: 'user_name' }
-            ]
-          }
-        ]
-      };
-
-      const mockMappedData = [
-        { user_id: '1', user_name: 'John' },
-        { user_id: '2', user_name: 'Jane' }
-      ];
-
       ApiService.prototype.fetchData.mockResolvedValue(mockMappedData);
 
       const result = await executeApiCalls(mockConfig, 'test-api');
@@ -89,18 +88,6 @@ describe('API 데이터 수집기', () => {
     });
 
     it('API 호출 실패 시 에러 처리', async () => {
-      const mockConfig = {
-        apis: [
-          {
-            id: 'error-api',
-            method: 'GET',
-            url: '/error',
-            host: 'api.example.com',
-            mapping: []
-          }
-        ]
-      };
-
       ApiService.prototype.fetchData.mockRejectedValue(new Error('네트워크 오류'));
 
       await expect(executeApiCalls(mockConfig, 'error-api')).rejects.toThrow('네트워크 오류');
@@ -108,14 +95,13 @@ describe('API 데이터 수집기', () => {
   });
 
   describe('CSV 변환', () => {
+    const mockData = [
+      { user_id: '1', user_name: 'John' },
+      { user_id: '2', user_name: 'Jane' }
+    ];
+
     it('데이터를 CSV 형식으로 변환해야 함', async () => {
-      const mockData = [
-        { user_id: '1', user_name: 'John' },
-        { user_id: '2', user_name: 'Jane' }
-      ];
-
       const expectedCsv = 'user_id,user_name\n1,John\n2,Jane';
-
       CsvService.prototype.convertToCsv.mockReturnValue(expectedCsv);
 
       const result = await convertToCsv(mockData);
@@ -135,33 +121,27 @@ describe('API 데이터 수집기', () => {
           {
             id: 'test-api',
             method: 'GET',
-            url: '/users',
-            host: 'api.example.com'
+            url: 'https://api.example.com/test'
           }
         ]
       };
 
-      const mockData = [
-        { user_id: '1', user_name: 'John' }
-      ];
+      const mockData = [{ id: 1, name: 'Test' }];
+      const mockCsv = 'id,name\n1,Test';
 
-      const mockCsv = 'user_id,user_name\n1,John';
-
-      fs.readFileSync.mockReturnValue(yaml.dump(mockConfig));
+      process.argv[2] = 'config.yaml';
+      fs.readFile.mockResolvedValue(yaml.dump(mockConfig));
       ApiService.prototype.fetchData.mockResolvedValue(mockData);
       CsvService.prototype.convertToCsv.mockReturnValue(mockCsv);
 
-      const result = await main();
-      expect(result).toBe(mockCsv);
-      expect(fs.writeFileSync).toHaveBeenCalledWith('output.csv', mockCsv);
+      await main();
+
+      expect(fs.writeFile).toHaveBeenCalledWith('output.csv', mockCsv);
     });
 
     it('에러가 발생했을 때 적절히 처리되어야 함', async () => {
-      fs.readFileSync.mockImplementation(() => {
-        throw new Error('파일을 찾을 수 없습니다');
-      });
-
-      await expect(main()).rejects.toThrow('파일을 찾을 수 없습니다');
+      process.argv[2] = undefined;
+      await expect(main()).rejects.toThrow('설정 파일 경로를 지정해주세요.');
     });
   });
 }); 

@@ -1,0 +1,27 @@
+apis:
+  - id: api-users
+    name: GET /users
+    description: GET 요청을 api.example.com에 보냅니다
+    method: GET
+    url: https://api.example.com/users
+    headers: {}
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: body
+        to: 내용
+  - id: api-posts
+    name: POST /posts
+    description: POST 요청을 api.example.com에 보냅니다
+    method: POST
+    url: https://api.example.com/posts
+    headers: {}
+    mapping:
+      - from: id
+        to: ID
+      - from: title
+        to: 제목
+      - from: body
+        to: 내용

@@ -1,21 +1,24 @@
-GET https://api.example.com/users?limit=10
-Authorization: Bearer token123
-Content-Type: application/json
-
-POST https://api.example.com/orders
+GET /users HTTP/1.1
+Host: api.example.com
 Content-Type: application/json
 Authorization: Bearer token123
 
-{
-    "userId": "123",
-    "items": ["item1", "item2"]
-}
-
-PUT https://api.example.com/products/123
+POST /posts HTTP/1.1
+Host: api.example.com
 Content-Type: application/json
-X-API-Key: abc123
+Authorization: Bearer token123
+Content-Length: 45
 
-{
-    "name": "Updated Product",
-    "price": 99.99
-} 
+{"title": "Test Post", "content": "Hello World"}
+
+PUT /posts/1 HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer token123
+Content-Length: 52
+
+{"title": "Updated Post", "content": "Updated Content"}
+
+DELETE /posts/1 HTTP/1.1
+Host: api.example.com
+Authorization: Bearer token123 

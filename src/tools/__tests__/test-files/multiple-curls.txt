@@ -1,0 +1,8 @@
+curl -X GET "https://api.example.com/users" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123"
+
+curl -X POST "https://api.example.com/posts" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123" \
+  -d '{"title": "Test Post", "content": "Hello World"}' 
